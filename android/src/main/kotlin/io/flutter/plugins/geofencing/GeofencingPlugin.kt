@@ -101,6 +101,7 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodCallHandler {
         val msg = "'registerGeofence' requires the ACCESS_FINE_LOCATION permission."
         Log.w(TAG, msg)
         result?.error(msg, null, null)
+        return
       }
       geofencingClient.addGeofences(getGeofencingRequest(geofence, initialTriggers),
               getGeofencePendingIndent(context, callbackHandle))?.run {
@@ -258,9 +259,13 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodCallHandler {
     when(call.method) {
       "GeofencingPlugin.initializeService" -> {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-          mActivity?.requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION), 12312)
+          // mActivity?.requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION), 12312)
+          Log.i(TAG, "Request ACCESS_FINE_LOCATION and ACCESS_BACKGROUND_LOCATION")
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-          mActivity?.requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 12312)
+          // mActivity?.requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 12312)
+          Log.i(TAG, "Request ACCESS_FINE_LOCATION")
+        } else {
+          Log.i(TAG, "Request nothing")
         }
         initializeService(mContext!!, args)
         result.success(true)
