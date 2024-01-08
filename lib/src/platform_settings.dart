@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:geofencing/src/geofencing.dart';
+import 'geofencing.dart';
 
 // Internal.
 List<dynamic> platformSettingsToArgs(AndroidGeofencingSettings s) =>
@@ -22,7 +22,7 @@ class AndroidGeofencingSettings {
 
   List<dynamic> _toArgs() {
     final int initTriggerMask = initialTrigger.fold(
-        0, (int trigger, GeofenceEvent e) => (geofenceEventToInt(e) | trigger));
+        0, (int trigger, GeofenceEvent e) => geofenceEventToInt(e) | trigger);
     return <dynamic>[
       initTriggerMask,
       expirationDuration,

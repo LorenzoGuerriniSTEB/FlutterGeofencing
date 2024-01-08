@@ -7,9 +7,9 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
-import 'package:geofencing/src/callback_dispatcher.dart';
-import 'package:geofencing/src/location.dart';
-import 'package:geofencing/src/platform_settings.dart';
+import 'callback_dispatcher.dart';
+import 'location.dart';
+import 'platform_settings.dart';
 
 const int _kEnterEvent = 1;
 const int _kExitEvent = 2;
@@ -29,8 +29,6 @@ int geofenceEventToInt(GeofenceEvent e) {
       return _kExitEvent;
     case GeofenceEvent.dwell:
       return _kDwellEvent;
-    default:
-      throw UnimplementedError();
   }
 }
 
@@ -73,13 +71,13 @@ class GeofenceRegion {
 
   GeofenceRegion(
       this.id, double latitude, double longitude, this.radius, this.triggers,
-      {AndroidGeofencingSettings androidSettings})
+      {AndroidGeofencingSettings? androidSettings})
       : location = Location(latitude, longitude),
-        androidSettings = (androidSettings ?? AndroidGeofencingSettings());
+        androidSettings = androidSettings ?? AndroidGeofencingSettings();
 
   List<dynamic> _toArgs() {
     final int triggerMask = triggers.fold(
-        0, (int trigger, GeofenceEvent e) => (geofenceEventToInt(e) | trigger));
+        0, (int trigger, GeofenceEvent e) => geofenceEventToInt(e) | trigger);
     final List<dynamic> args = <dynamic>[
       id,
       location.latitude,
@@ -102,10 +100,12 @@ class GeofencingManager {
 
   /// Initialize the plugin and request relevant permissions from the user.
   static Future<void> initialize() async {
-    final CallbackHandle callback =
+    final CallbackHandle? callback =
         PluginUtilities.getCallbackHandle(callbackDispatcher);
-    await _channel.invokeMethod('GeofencingPlugin.initializeService',
-        <dynamic>[callback.toRawHandle()]);
+    await _channel.invokeMethod(
+      'GeofencingPlugin.initializeService',
+      <dynamic>[callback?.toRawHandle()],
+    );
   }
 
   /// Promote the geofencing service to a foreground service.
@@ -113,7 +113,7 @@ class GeofencingManager {
   /// Will throw an exception if called anywhere except for a geofencing
   /// callback.
   static Future<void> promoteToForeground() async =>
-      await _background.invokeMethod('GeofencingService.promoteToForeground');
+      _background.invokeMethod('GeofencingService.promoteToForeground');
 
   /// Demote the geofencing service from a foreground service to a background
   /// service.
@@ -121,7 +121,7 @@ class GeofencingManager {
   /// Will throw an exception if called anywhere except for a geofencing
   /// callback.
   static Future<void> demoteToBackground() async =>
-      await _background.invokeMethod('GeofencingService.demoteToBackground');
+      _background.invokeMethod('GeofencingService.demoteToBackground');
 
   /// Register for geofence events for a [GeofenceRegion].
   ///
@@ -142,7 +142,7 @@ class GeofencingManager {
       throw UnsupportedError("iOS does not support 'GeofenceEvent.dwell'");
     }
     final List<dynamic> args = <dynamic>[
-      PluginUtilities.getCallbackHandle(callback).toRawHandle()
+      PluginUtilities.getCallbackHandle(callback)?.toRawHandle()
     ];
     args.addAll(region._toArgs());
     await _channel.invokeMethod('GeofencingPlugin.registerGeofence', args);
@@ -154,8 +154,12 @@ class GeofencingManager {
           .invokeMethod('GeofencingPlugin.getRegisteredGeofenceIds'));
 
   /// Stop receiving geofence events for a given [GeofenceRegion].
-  static Future<bool> removeGeofence(GeofenceRegion region) async =>
-      (region == null) ? false : await removeGeofenceById(region.id);
+  static Future<bool> removeGeofence(GeofenceRegion? region) async {
+    if (region == null) {
+      return false;
+    }
+    return removeGeofenceById(region.id);
+  }
 
   /// Stop receiving geofence events for an identifier associated with a
   /// geofence region.
